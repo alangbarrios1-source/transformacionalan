@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useCurrentMonth } from '../hooks/useCurrentMonth';
 import { useNotifications } from '../hooks/useNotifications';
 import { db } from '../storage/db';
@@ -10,12 +10,30 @@ export function SettingsPage() {
   const { permission, enabledIds, requestPermission, toggleNotification, toggleAll, notifications } = useNotifications();
   const [showNotifs, setShowNotifs] = useState(false);
   const [exportMsg, setExportMsg] = useState('');
+  const importRef = useRef<HTMLInputElement>(null);
+
+  const blobToDataURL = (blob: Blob) =>
+    new Promise<string>((resolve) => {
+      const r = new FileReader();
+      r.onloadend = () => resolve(r.result as string);
+      r.readAsDataURL(blob);
+    });
 
   const handleExport = async () => {
+    setExportMsg('Generando backup...');
     const checklists = await db.dailyChecklists.toArray();
     const weights = await db.weightLogs.toArray();
     const settings = await db.appSettings.toArray();
-    const data = { checklists, weights, settings, exportDate: new Date().toISOString() };
+    const rawPhotos = await db.progressPhotos.toArray();
+    const photos = await Promise.all(
+      rawPhotos.map(async (p) => ({
+        date: p.date,
+        note: p.note,
+        createdAt: p.createdAt,
+        data: await blobToDataURL(p.blob),
+      }))
+    );
+    const data = { checklists, weights, settings, photos, exportDate: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -23,8 +41,31 @@ export function SettingsPage() {
     a.download = `transform-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setExportMsg('Backup descargado');
+    setExportMsg(`Backup descargado (${photos.length} fotos)`);
     setTimeout(() => setExportMsg(''), 3000);
+  };
+
+  const handleImport = async (file: File | undefined) => {
+    if (!file) return;
+    if (!confirm('Esto restaurará el backup sobre tus datos actuales. ¿Continuar?')) return;
+    try {
+      const data = JSON.parse(await file.text());
+      if (Array.isArray(data.checklists)) await db.dailyChecklists.bulkPut(data.checklists);
+      if (Array.isArray(data.weights)) await db.weightLogs.bulkPut(data.weights);
+      if (Array.isArray(data.settings)) await db.appSettings.bulkPut(data.settings);
+      if (Array.isArray(data.photos)) {
+        for (const p of data.photos) {
+          const blob = await (await fetch(p.data)).blob();
+          await db.progressPhotos.add({ date: p.date, note: p.note, createdAt: p.createdAt, blob });
+        }
+      }
+      alert('Backup restaurado. La app se recargará.');
+      window.location.reload();
+    } catch {
+      alert('No se pudo leer el archivo de backup.');
+    } finally {
+      if (importRef.current) importRef.current.value = '';
+    }
   };
 
   const handleClear = async () => {
@@ -145,7 +186,20 @@ export function SettingsPage() {
           onClick={handleExport}
           className="w-full bg-bg-elevated text-text-primary text-sm py-2.5 rounded-lg active:scale-95 transition-transform"
         >
-          📥 Exportar datos (JSON)
+          📥 Exportar datos + fotos (JSON)
+        </button>
+        <input
+          ref={importRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => handleImport(e.target.files?.[0])}
+        />
+        <button
+          onClick={() => importRef.current?.click()}
+          className="w-full bg-bg-elevated text-text-primary text-sm py-2.5 rounded-lg active:scale-95 transition-transform"
+        >
+          📤 Importar / restaurar backup
         </button>
         {exportMsg && <p className="text-xs text-success text-center">{exportMsg}</p>}
         <button

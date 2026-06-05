@@ -1,10 +1,12 @@
 import { useProgress } from '../hooks/useProgress';
 import { useCurrentMonth } from '../hooks/useCurrentMonth';
 import { formatDateShort } from '../utils/dates';
+import { useNavigate } from 'react-router-dom';
 
 export function ProgressPage() {
   const progress = useProgress();
-  const { dayOfPlan } = useCurrentMonth();
+  const { dayOfPlan, month } = useCurrentMonth();
+  const navigate = useNavigate();
 
   return (
     <div className="pt-6 pb-4 space-y-5 animate-fade-in">
@@ -28,6 +30,21 @@ export function ProgressPage() {
           />
         </div>
       </div>
+
+      {/* Fotos de progreso */}
+      <button
+        onClick={() => navigate('/progress-photos')}
+        className="w-full bg-bg-card border border-slate-700/50 rounded-xl p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
+      >
+        <span className="text-2xl">📸</span>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-semibold text-text-primary">Fotos de progreso</p>
+          <p className="text-xs text-text-muted">Compara tu cambio físico antes → después</p>
+        </div>
+        <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
 
       {/* Heatmap */}
       <div>
@@ -64,22 +81,32 @@ export function ProgressPage() {
 
       {/* Timeline */}
       <div className="bg-bg-card rounded-xl p-4 border border-slate-700/50">
-        <h3 className="text-xs font-semibold text-accent mb-3">JULIO 2026</h3>
+        <h3 className="text-xs font-semibold text-accent mb-3">META: SEPTIEMBRE 2026</h3>
         <div className="space-y-3">
           {[
-            { month: 'Abril', face: 'Oratane empieza. Purga posible.', body: 'Mes 1: técnica, tempo 3-1-0', money: 'n8n + datos curiosos' },
-            { month: 'Mayo', face: 'Menos brotes. Pómulos salen.', body: 'Mes 2: volumen, 3 series. +2-3kg', money: '1 cliente nuevo' },
-            { month: 'Junio', face: 'Piel limpia visible. Mandíbula.', body: 'Mes 3: intensidad. +4-5kg', money: '2-3 clientes' },
-            { month: 'JULIO', face: 'IRRECONOCIBLE. Piel limpia. Pómulos. Pelo.', body: '54-56 kg. V-taper. Cuello.', money: 'AutoPilot + canal' },
-          ].map((item, i) => (
-            <div key={i} className={`flex gap-3 ${i === 3 ? 'bg-accent/10 -mx-2 px-2 py-2 rounded-lg' : ''}`}>
-              <span className={`text-xs font-bold w-12 ${i === 3 ? 'text-accent' : 'text-text-muted'}`}>{item.month}</span>
-              <div className="flex-1 text-xs text-text-secondary">
-                <p>{item.face}</p>
-                <p className="text-text-muted">{item.body}</p>
+            { month: 'Junio', face: 'Oratane empieza. Purga posible.', body: 'Mes 1: técnica, tempo 3-1-0', money: 'n8n + datos curiosos' },
+            { month: 'Julio', face: 'Menos brotes. Pómulos salen.', body: 'Mes 2: volumen, 3 series. +2-3kg', money: '1 cliente nuevo' },
+            { month: 'Agosto', face: 'Piel limpia visible. Mandíbula.', body: 'Mes 3: intensidad. +4-5kg', money: '2-3 clientes' },
+            { month: 'SEPT', face: 'IRRECONOCIBLE. Piel limpia. Pómulos. Pelo.', body: '54-56 kg. V-taper. Cuello.', money: 'AutoPilot + canal' },
+          ].map((item, i) => {
+            const isGoal = i === 3;
+            const isCurrent = i === month - 1;
+            return (
+              <div
+                key={i}
+                className={`flex gap-3 rounded-lg ${isCurrent || isGoal ? '-mx-2 px-2 py-2' : ''} ${isGoal ? 'bg-accent/10' : ''} ${isCurrent ? 'bg-accent/5 ring-1 ring-accent/40' : ''}`}
+              >
+                <span className={`text-xs font-bold w-12 ${isCurrent || isGoal ? 'text-accent' : 'text-text-muted'}`}>{item.month}</span>
+                <div className="flex-1 text-xs text-text-secondary">
+                  <p>
+                    {item.face}
+                    {isCurrent && <span className="text-accent font-semibold"> · aquí vas</span>}
+                  </p>
+                  <p className="text-text-muted">{item.body}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

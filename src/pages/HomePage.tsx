@@ -6,9 +6,10 @@ import { checklistItems } from '../data/checklist';
 import { getDayName, getDayOfWeek } from '../utils/dates';
 import { useNavigate } from 'react-router-dom';
 import { useProgress } from '../hooks/useProgress';
+import { Spinner } from '../components/Spinner';
 
 const quotes = [
-  'Julio 2026: irreconocible. Vamos, Alan.',
+  'Septiembre 2026: irreconocible. Vamos, Alan.',
   'Cada día cuenta. Sin excusas.',
   'La disciplina le gana al talento.',
   'Hoy es el día que tu yo del futuro agradecerá.',
@@ -27,7 +28,9 @@ export function HomePage() {
   const todayQuote = quotes[new Date().getDate() % quotes.length];
   const dayName = getDayName(getDayOfWeek());
 
-  if (!loaded) return <div className="pt-8 text-center text-text-muted">Cargando...</div>;
+  if (!loaded) return <Spinner />;
+
+  const planPct = Math.min((dayOfPlan / 90) * 100, 100);
 
   const morningItems = checklistItems.filter((i) => i.timeOfDay === 'morning');
   const afternoonItems = checklistItems.filter((i) => i.timeOfDay === 'afternoon');
@@ -36,9 +39,18 @@ export function HomePage() {
   return (
     <div className="pt-6 pb-4 space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="text-center">
-        <p className="text-xs text-text-muted uppercase tracking-wider">{dayName} · Día {dayOfPlan} de 90 · Mes {month}</p>
-        <p className="text-sm text-accent mt-1 italic">"{todayQuote}"</p>
+      <div className="flex flex-col items-center gap-2">
+        <div className="inline-flex items-center gap-2 bg-bg-card border border-slate-700/50 rounded-full px-4 py-1.5">
+          <span className="text-xs text-text-muted uppercase tracking-wider">{dayName}</span>
+          <span className="w-1 h-1 rounded-full bg-text-muted" />
+          <span className="text-xs font-bold text-accent">Día {dayOfPlan} de 90</span>
+          <span className="w-1 h-1 rounded-full bg-text-muted" />
+          <span className="text-xs text-text-secondary">Mes {month}</span>
+        </div>
+        <div className="w-44 h-1 bg-bg-elevated rounded-full overflow-hidden">
+          <div className="h-full bg-accent rounded-full transition-all duration-500" style={{ width: `${planPct}%` }} />
+        </div>
+        <p className="text-sm text-accent italic text-center">"{todayQuote}"</p>
       </div>
 
       {/* Progress Ring + Streak */}

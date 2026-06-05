@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '../storage/db';
 import { getCurrentMonth, getDayOfPlan } from '../utils/periodization';
 
-const DEFAULT_START = '2026-04-20';
+const DEFAULT_START = '2026-06-05';
 
 export function useCurrentMonth() {
   const [month, setMonth] = useState<1 | 2 | 3>(1);

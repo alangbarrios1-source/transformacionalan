@@ -8,6 +8,7 @@ import { ProgressPage } from './pages/ProgressPage';
 import { SchedulePage } from './pages/SchedulePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { WeightLogPage } from './pages/WeightLogPage';
+import { ProgressPhotosPage } from './pages/ProgressPhotosPage';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/weight-log" element={<WeightLogPage />} />
+        <Route path="/progress-photos" element={<ProgressPhotosPage />} />
       </Routes>
     </HashRouter>
   );
